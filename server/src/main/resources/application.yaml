@@ -1,0 +1,14 @@
+ktor:
+  deployment:
+    port: 8080
+    host: 0.0.0.0
+
+  application:
+    modules:
+      - com.ell.nammaooru.ApplicationKt.module
+
+logger:
+  level: INFO
+
+  loggers:
+    io.ktor.server.routing: INFO
