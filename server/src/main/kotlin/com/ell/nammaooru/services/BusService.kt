@@ -1,58 +1,38 @@
 package com.ell.nammaooru.services
 
-import kotlinx.serialization.Serializable
-import java.util.UUID
-
-
-data class Stop(
-    val id: String = UUID.randomUUID().toString(),
-    val name: String,
-    val time: String,
-)
-
-@Serializable
-data class Bus(
-    val id: String = UUID.randomUUID().toString(),
-    val name: String,
-    val stop: String,
-    )
-
-
-val dummyBuses = mutableListOf(
-    Bus(name = "Bus 1", stop = "Stop 1"),
-    Bus(name = "Bus 2", stop = "Stop 2"),
-    Bus(name = "Bus 3", stop = "Stop 3"),
-)
+import com.ell.nammaooru.data.Bus
 
 class BusService {
+    private val dummyBuses = mutableListOf(
+        Bus( name="Route 1A", routeNumber = "1A"),
+        Bus( name = "Route 2B", routeNumber =  "2B")
+    )
 
-    fun getBus(id: String): Bus? {
-        return dummyBuses.find { it.id == id }
-    }
     fun getBuses(): List<Bus> {
         return dummyBuses
     }
-    fun addBus(bus: Bus): Bus {
-        dummyBuses.add(bus)
-        return bus
+
+    fun getBusById(busId: String): Bus? {
+        return dummyBuses.find { it.id == busId }
     }
-    fun updateBus(id: String, bus: Bus): Bus? {
-        val index = dummyBuses.indexOfFirst { it.id == id }
+
+    fun addBus(bus: Bus): Bus {
+        val newBus = Bus(name =bus.name, routeNumber =  bus.routeNumber)
+        dummyBuses.add(newBus)
+        return newBus
+    }
+
+    fun updateBus(busId: String, bus: Bus): Bus? {
+        val index = dummyBuses.indexOfFirst { it.id == busId }
         if (index != -1) {
-            dummyBuses[index] = bus.copy(id = id)
-            return bus
+            val updatedBus = bus.copy(id = busId)
+            dummyBuses[index] = updatedBus
+            return updatedBus
         }
         return null
     }
 
-
-    fun deleteBus(id: String): Boolean {
-        val index = dummyBuses.indexOfFirst { it.id == id }
-        if (index != -1) {
-            dummyBuses.removeAt(index)
-            return true
-        }
-        return false
+    fun deleteBusById(busId: String): Boolean {
+        return dummyBuses.removeIf { it.id == busId }
     }
-
 }
