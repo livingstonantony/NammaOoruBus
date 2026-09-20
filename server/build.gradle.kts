@@ -19,6 +19,8 @@ dependencies {
     implementation(libs.ktor.serializationKotlinxJson)
     implementation(libs.ktor.callLogging)
     implementation(libs.ktor.serverCconfigYaml)
+    implementation(libs.ktor.serverAuth)
+    implementation(libs.ktor.serverStatusPages)
     testImplementation(libs.ktor.serverTestHost)
     testImplementation(libs.kotlin.testJunit)
 }

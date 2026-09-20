@@ -6,6 +6,8 @@ ktor:
   application:
     modules:
       - com.ell.nammaooru.ApplicationKt.module
+  security:
+    apiKey: ${NAMMAOORU_API_KEY:-my-secret-nammaooru-key}
 
 logger:
   level: INFO

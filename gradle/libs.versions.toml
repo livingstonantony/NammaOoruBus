@@ -47,6 +47,8 @@ ktor-serverContentNegotiation = { module = "io.ktor:ktor-server-content-negotiat
 ktor-serializationKotlinxJson = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-callLogging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
 ktor-serverCconfigYaml = { module = "io.ktor:ktor-server-config-yaml", version.ref = "ktor" }
+ktor-serverAuth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
+ktor-serverStatusPages = { module = "io.ktor:ktor-server-status-pages", version.ref = "ktor" }
 
 wrappers-browser = { module = "org.jetbrains.kotlin-wrappers:kotlin-browser", version.ref = "kotlin-wrappers" }
 
