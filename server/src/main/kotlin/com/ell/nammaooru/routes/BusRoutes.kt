@@ -11,10 +11,10 @@ import io.ktor.server.routing.*
 
 fun Route.busRoutes(busService: BusService) {
 
-    route("/") {
+    route("/busService") {
 
         // GET /busService
-        get("busService") {
+        get {
 
             val data: List<Bus> = busService.getBuses()
 
@@ -29,14 +29,18 @@ fun Route.busRoutes(busService: BusService) {
 
 
         // GET /busService/1
-        get("busService/{id}") {
+        get("/{id}") {
 
             val id = call.parameters["id"]
 
             if (id == null) {
                 call.respond(
-                    HttpStatusCode.BadRequest,
-                    mapOf("message" to "Invalid bus id")
+                    HttpStatusCode.NotFound,
+                    Response(
+                        result = "failed",
+                        message = "Invalid bus id",
+                        data = null
+                    )
                 )
                 return@get
             }
@@ -66,7 +70,7 @@ fun Route.busRoutes(busService: BusService) {
 
 
         // POST /busService
-        post("busService") {
+        post("") {
 
             try {
 
@@ -87,14 +91,18 @@ fun Route.busRoutes(busService: BusService) {
 
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    mapOf("message" to "Invalid bus data: $e")
+                    Response(
+                        result = "failed",
+                        message = "Invalid bus data: $e",
+                        data = null
+                    )
                 )
             }
         }
 
 
         // PUT /busService/1
-        put("busService/{id}") {
+        put("/{id}") {
 
             val id = call.parameters["id"]
 
@@ -153,7 +161,7 @@ fun Route.busRoutes(busService: BusService) {
 
 
         // DELETE /busService/1
-        delete("busService/{id}") {
+        delete("/{id}") {
 
             val id = call.parameters["id"]
 
