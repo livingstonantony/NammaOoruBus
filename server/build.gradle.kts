@@ -30,6 +30,7 @@ dependencies {
     implementation(libs.exposed.core)
     implementation(libs.exposed.dao)
     implementation(libs.exposed.jdbc)
+    implementation(libs.exposed.json)
     implementation(libs.hikari)
     implementation(libs.mysql.connector)
 

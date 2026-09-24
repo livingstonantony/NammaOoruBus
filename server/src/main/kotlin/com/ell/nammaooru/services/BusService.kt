@@ -1,6 +1,7 @@
 package com.ell.nammaooru.services
 
 import com.ell.nammaooru.data.Bus
+import com.ell.nammaooru.data.Days
 import com.ell.nammaooru.database.Buses
 import com.ell.nammaooru.database.DatabaseFactory.dbQuery
 import org.jetbrains.exposed.sql.*
@@ -27,6 +28,7 @@ class BusService {
             it[busName] = bus.busName
             it[note] = bus.note
             it[departTime] = bus.departTime
+            it[days] = bus.days
         }
         bus
     }
@@ -38,6 +40,7 @@ class BusService {
             it[busName] = bus.busName
             it[note] = bus.note
             it[departTime] = bus.departTime
+            it[days] = bus.days
         }
 
         if (updatedRows == 0) {
@@ -58,5 +61,6 @@ class BusService {
         busName = this[Buses.busName],
         note = this[Buses.note],
         departTime = this[Buses.departTime],
+        days = this[Buses.days]
     )
 }
