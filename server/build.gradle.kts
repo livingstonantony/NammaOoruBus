@@ -10,6 +10,10 @@ application {
     mainClass = "com.ell.nammaooru.ApplicationKt"
 }
 
+tasks.withType<JavaExec>().configureEach {
+    systemProperty("io.ktor.development", "true")
+}
+
 dependencies {
     api(project(":core"))
     implementation(libs.logback)
@@ -21,6 +25,14 @@ dependencies {
     implementation(libs.ktor.serverCconfigYaml)
     implementation(libs.ktor.serverAuth)
     implementation(libs.ktor.serverStatusPages)
+    
+    // Database
+    implementation(libs.exposed.core)
+    implementation(libs.exposed.dao)
+    implementation(libs.exposed.jdbc)
+    implementation(libs.hikari)
+    implementation(libs.mysql.connector)
+
     testImplementation(libs.ktor.serverTestHost)
     testImplementation(libs.kotlin.testJunit)
 }

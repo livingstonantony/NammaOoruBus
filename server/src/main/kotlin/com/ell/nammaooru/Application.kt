@@ -27,6 +27,7 @@ val ApiKeyPlugin = createRouteScopedPlugin("ApiKeyPlugin") {
     onCall { call ->
         val apiKey = call.request.headers["X-API-Key"]
         val serverSecret = call.application.environment.config.propertyOrNull("ktor.security.apiKey")?.getString()
+            ?: "my-secret-nammaooru-key"
 
         if (apiKey == null || apiKey != serverSecret) {
             throw UnauthorizedException()
@@ -35,6 +36,7 @@ val ApiKeyPlugin = createRouteScopedPlugin("ApiKeyPlugin") {
 }
 
 fun Application.module() {
+    com.ell.nammaooru.database.DatabaseFactory.init(environment.config)
 
     install(CallLogging) {
         level = Level.INFO

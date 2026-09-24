@@ -1,38 +1,62 @@
 package com.ell.nammaooru.services
 
 import com.ell.nammaooru.data.Bus
+import com.ell.nammaooru.database.Buses
+import com.ell.nammaooru.database.DatabaseFactory.dbQuery
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 
 class BusService {
-    private val dummyBuses = mutableListOf(
-        Bus( name="Route 1A", routeNumber = "1A"),
-        Bus( name = "Route 2B", routeNumber =  "2B")
-    )
 
-    fun getBuses(): List<Bus> {
-        return dummyBuses
+    suspend fun getBuses(): List<Bus> = dbQuery {
+        Buses.selectAll().map { it.toBus() }
     }
 
-    fun getBusById(busId: String): Bus? {
-        return dummyBuses.find { it.id == busId }
+    suspend fun getBusById(busId: String): Bus? = dbQuery {
+        Buses.selectAll()
+            .where { Buses.id eq busId }
+            .map { it.toBus() }
+            .singleOrNull()
     }
 
-    fun addBus(bus: Bus): Bus {
-        val newBus = Bus(name =bus.name, routeNumber =  bus.routeNumber)
-        dummyBuses.add(newBus)
-        return newBus
-    }
-
-    fun updateBus(busId: String, bus: Bus): Bus? {
-        val index = dummyBuses.indexOfFirst { it.id == busId }
-        if (index != -1) {
-            val updatedBus = bus.copy(id = busId)
-            dummyBuses[index] = updatedBus
-            return updatedBus
+    suspend fun addBus(bus: Bus): Bus = dbQuery {
+        Buses.insert {
+            it[id] = bus.id
+            it[destinationEnglish] = bus.destinationEnglish
+            it[destinationTamil] = bus.destinationTamil
+            it[busName] = bus.busName
+            it[note] = bus.note
+            it[departTime] = bus.departTime
         }
-        return null
+        bus
     }
 
-    fun deleteBusById(busId: String): Boolean {
-        return dummyBuses.removeIf { it.id == busId }
+    suspend fun updateBus(busId: String, bus: Bus): Bus? = dbQuery {
+        val updatedRows = Buses.update({ Buses.id eq busId }) {
+            it[destinationEnglish] = bus.destinationEnglish
+            it[destinationTamil] = bus.destinationTamil
+            it[busName] = bus.busName
+            it[note] = bus.note
+            it[departTime] = bus.departTime
+        }
+
+        if (updatedRows == 0) {
+            return@dbQuery null
+        }
+
+        getBusById(busId)
     }
+
+    suspend fun deleteBusById(busId: String): Boolean = dbQuery {
+        Buses.deleteWhere { id eq busId } > 0
+    }
+
+    private fun ResultRow.toBus(): Bus = Bus(
+        id = this[Buses.id],
+        destinationEnglish = this[Buses.destinationEnglish],
+        destinationTamil = this[Buses.destinationTamil],
+        busName = this[Buses.busName],
+        note = this[Buses.note],
+        departTime = this[Buses.departTime],
+    )
 }

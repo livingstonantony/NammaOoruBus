@@ -147,7 +147,11 @@ fun Route.busRoutes(busService: BusService) {
 
                     call.respond(
                         HttpStatusCode.OK,
-                        updatedBus
+                        Response(
+                            result = "success",
+                            message = "Bus updated successfully",
+                            data = updatedBus
+                        )
                     )
                 }
 
