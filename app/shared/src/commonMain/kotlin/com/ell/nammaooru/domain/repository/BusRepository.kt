@@ -9,9 +9,9 @@ interface BusRepository {
 
     suspend fun getBus(id: String): Result<Response<Bus>>
 
-    suspend fun createBus(request: Bus): Result<Bus>
+    suspend fun createBus(request: Bus): Result<Response<Bus>>
 
-    suspend fun updateBus(id: String, request: Bus): Result<Bus>
+    suspend fun updateBus(id: String, request: Bus): Result<Response<Bus>>
 
-    suspend fun deleteBus(id: String): Result<Response<Any>>
+    suspend fun deleteBus(id: String): Result<Response<Bus?>>
 }
