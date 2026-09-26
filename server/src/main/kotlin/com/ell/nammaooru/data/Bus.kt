@@ -2,10 +2,8 @@ package com.ell.nammaooru.data
 
 import kotlinx.serialization.Serializable
 import java.util.UUID
-import kotlin.time.Clock
-import kotlin.time.Instant
 
-enum class Days{
+enum class Days {
     Monday,
     Tuesday,
     Wednesday,
@@ -14,9 +12,11 @@ enum class Days{
     Saturday,
     Sunday,
 }
+
 @Serializable
 data class Bus(
     val id: String = UUID.randomUUID().toString(),
+    val departingFrom: String,
     val destinationEnglish: String,
     val destinationTamil: String,
     val busName: String,

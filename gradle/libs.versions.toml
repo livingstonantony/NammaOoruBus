@@ -61,6 +61,7 @@ exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "e
 exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exposed" }
 exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
 exposed-json = { module = "org.jetbrains.exposed:exposed-json", version.ref = "exposed" }
+exposed-javatime = { module = "org.jetbrains.exposed:exposed-java-time", version.ref = "exposed" }
 hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
 mysql-connector = { module = "com.mysql:mysql-connector-j", version.ref = "mysql" }
 

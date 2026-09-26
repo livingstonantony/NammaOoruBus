@@ -4,12 +4,12 @@ import com.ell.nammaooru.data.Days
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.config.*
-import jdk.jfr.internal.event.EventConfiguration.timestamp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.javatime.time
 import org.jetbrains.exposed.sql.json.jsonb
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -44,7 +44,7 @@ object DatabaseFactory {
             Database.connect(dataSource)
 
             transaction {
-                SchemaUtils.create(Buses)
+                SchemaUtils.createMissingTablesAndColumns(Buses)
             }
         } catch (e: Exception) {
             System.err.println("Database initialization failed: ${e.message}")
@@ -59,11 +59,12 @@ object DatabaseFactory {
 
 object Buses : Table("buses") {
     val id = varchar("id", 50)
+    val departingFrom = varchar("departing_from", 255)
     val destinationEnglish = varchar("destination_english", 255)
     val destinationTamil = varchar("destination_tamil", 255)
     val busName = varchar("bus_name", 50)
     val note = varchar("note", 50)
-    val departTime = varchar("departTime", 50)
+    val departTime = time("depart_time")
 
     val days = jsonb<List<Days>>(
         name = "days",
