@@ -48,8 +48,8 @@ class BusViewModel(val repository: BusRepository) : ViewModel() {
     private val _stateUpdateBus = MutableStateFlow<UiState<Bus?>>(UiState.Loading)
     val stateUpdateBus: StateFlow<UiState<Bus?>> = _stateUpdateBus.asStateFlow()
 
-    private val _stateDeleteBus = MutableStateFlow<UiState<Bus?>>(UiState.Loading)
-    val stateDeleteBus: StateFlow<UiState<Bus?>> = _stateDeleteBus.asStateFlow()
+    private val _stateDeleteBus = MutableStateFlow<UiState<Any?>>(UiState.Loading)
+    val stateDeleteBus: StateFlow<UiState<Any?>> = _stateDeleteBus.asStateFlow()
 
 
     fun processIntent(intent: BusIntent) {

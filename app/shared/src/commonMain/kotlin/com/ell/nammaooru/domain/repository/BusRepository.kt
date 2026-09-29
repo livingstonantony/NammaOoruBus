@@ -13,5 +13,5 @@ interface BusRepository {
 
     suspend fun updateBus(id: String, request: Bus): Result<Response<Bus>>
 
-    suspend fun deleteBus(id: String): Result<Response<Bus?>>
+    suspend fun deleteBus(id: String): Result<Response<Any?>>
 }

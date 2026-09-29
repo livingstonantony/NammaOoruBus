@@ -24,7 +24,7 @@ class BusRepositoryImpl(private val client: HttpClient) : BusRepository {
         }
     }
 
-    override suspend fun createBus(request: Bus): Result<Bus> {
+    override suspend fun createBus(request: Bus): Result<Response<Bus>> {
         return runCatching {
             client.post(ApiConfig.BUS_SERVICE).body()
         }
@@ -33,13 +33,13 @@ class BusRepositoryImpl(private val client: HttpClient) : BusRepository {
     override suspend fun updateBus(
         id: String,
         request: Bus
-    ): Result<Bus> {
+    ): Result<Response<Bus>> {
         return runCatching {
             client.put("${ApiConfig.BUS_SERVICE}/$id").body()
         }
     }
 
-    override suspend fun deleteBus(id: String): Result<Response<Any>> {
+    override suspend fun deleteBus(id: String): Result<Response<Any?>> {
         return runCatching {
             client.delete("${ApiConfig.BUS_SERVICE}/$id").body()
         }
