@@ -22,6 +22,9 @@ exposed = "0.57.0"
 hikaricp = "6.2.1"
 mysql = "9.1.0"
 
+koin = "4.2.0"
+koin-plugin = "1.0.0"
+
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
@@ -84,6 +87,12 @@ exposed-javatime = { module = "org.jetbrains.exposed:exposed-java-time", version
 hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
 mysql-connector = { module = "com.mysql:mysql-connector-j", version.ref = "mysql" }
 
+# koin
+
+koin-core = { module = "io.insert-koin:koin-core",  version.ref = "koin" }
+koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
+koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
+koin-android = { module = "io.insert-koin:koin-android", version.ref="koin" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
@@ -94,3 +103,4 @@ kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinxSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
+koin-compiler = { id = "io.insert-koin.compiler.plugin", version.ref = "koin-plugin" }
