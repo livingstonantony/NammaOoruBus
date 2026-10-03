@@ -3,6 +3,7 @@ package com.ell.nammaooru.network
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.DEFAULT
@@ -20,6 +21,13 @@ actual fun createHttpClient(): HttpClient {
         defaultRequest {
             header("X-API-Key", ApiConfig.X_API_KEY)
         }
+
+        install(HttpTimeout) {
+            requestTimeoutMillis = 30_000
+            connectTimeoutMillis = 10_000
+            socketTimeoutMillis = 30_000
+        }
+
         install(ContentNegotiation) {
             json(
                 Json {

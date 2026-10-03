@@ -2,6 +2,8 @@ package com.ell.nammaooru.domain.model
 
 import kotlinx.serialization.Serializable
 
+
+@Serializable
 enum class Days {
     Monday,
     Tuesday,
@@ -12,6 +14,7 @@ enum class Days {
     Sunday,
 }
 
+@Serializable
 data class Bus(
     val id: String,
     val departingFrom: String,

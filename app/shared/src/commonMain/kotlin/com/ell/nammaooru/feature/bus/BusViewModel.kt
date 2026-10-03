@@ -4,12 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ell.nammaooru.domain.model.Bus
 import com.ell.nammaooru.domain.repository.BusRepository
-import com.ell.nammaooru.feature.bus.UiState
-import com.ell.nammaooru.network.AppResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 sealed interface UiState<out T> {
@@ -26,7 +23,7 @@ sealed interface UiState<out T> {
 }
 
 sealed class BusIntent {
-    object GetBuse : BusIntent()
+    object GetBuses : BusIntent()
     data class GetBus(val id: String) : BusIntent()
     data class CreateBus(val bus: Bus) : BusIntent()
     data class UpdateBus(val id: String, val bus: Bus) : BusIntent()
@@ -55,7 +52,7 @@ class BusViewModel(val repository: BusRepository) : ViewModel() {
     fun processIntent(intent: BusIntent) {
         viewModelScope.launch {
             when (intent) {
-                is BusIntent.GetBuse -> {
+                is BusIntent.GetBuses -> {
                     getBuses()
                 }
 
