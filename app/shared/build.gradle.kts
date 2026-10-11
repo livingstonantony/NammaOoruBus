@@ -72,6 +72,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
 
 
+            implementation(compose.materialIconsExtended)
+
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serializationKotlinxJson)
