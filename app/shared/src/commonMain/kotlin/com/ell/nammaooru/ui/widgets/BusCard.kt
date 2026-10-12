@@ -126,9 +126,9 @@ fun BusCard(
 
                 if (titleText.isNotEmpty()) {
                     Text(
-                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        modifier = Modifier/*.horizontalScroll(rememberScrollState())*/,
                         text = titleText,
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
@@ -167,9 +167,9 @@ fun BusCard(
 
                 if (subtitleText.isNotEmpty()) {
                     Text(
-                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        modifier = Modifier/*.horizontalScroll(rememberScrollState())*/,
                         text = subtitleText,
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
                 }

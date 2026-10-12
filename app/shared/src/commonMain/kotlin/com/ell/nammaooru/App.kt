@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import com.ell.nammaooru.ui.screens.BusesScreen
+import com.ell.nammaooru.ui.theme.AppTheme
 import org.jetbrains.compose.resources.painterResource
 
 import nammaooru.app.shared.generated.resources.Res
@@ -27,7 +28,7 @@ import nammaooru.app.shared.generated.resources.compose_multiplatform
 @Composable
 @Preview
 fun App() {
-    MaterialTheme {
+    AppTheme {
 
         Scaffold { paddingValues ->
 

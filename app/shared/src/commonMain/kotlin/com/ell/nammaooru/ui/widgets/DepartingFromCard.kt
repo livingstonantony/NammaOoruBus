@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Apps
@@ -56,7 +57,7 @@ fun DepartingFromCard() {
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
 //            .background(Color(0xFFEDEDED))
-            .background(MaterialTheme.colorScheme.surface)
+            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -136,7 +137,7 @@ fun TimeChipsCard(icon: ImageVector, text: String) {
         modifier = Modifier
             .clip(RoundedCornerShape(50.dp))
 
-            .background(Color.LightGray)
+            .background(Color(0xFFE8ECE9))
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -162,9 +163,9 @@ fun LocationFilterChips(icon: ImageVector, text: String, isSelected: Boolean, on
 
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(50.dp))
+            .clip(CircleShape)
 
-            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color.LightGray)
+            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFFE8ECE9))
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
