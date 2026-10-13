@@ -25,6 +25,7 @@ dependencies {
     implementation(libs.ktor.serverCconfigYaml)
     implementation(libs.ktor.serverAuth)
     implementation(libs.ktor.serverStatusPages)
+    implementation(libs.ktor.server.swagger)
     
     // Database
     implementation(libs.exposed.core)

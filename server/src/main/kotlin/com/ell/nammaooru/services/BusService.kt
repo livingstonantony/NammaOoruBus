@@ -11,8 +11,33 @@ import java.util.Locale
 
 class BusService {
 
-    suspend fun getBuses(): List<Bus> = dbQuery {
-        Buses.selectAll().map { it.toBus() }
+    suspend fun getBuses(
+        departingFrom: String? = null,
+        destinationEnglish: String? = null,
+        timeFrom: LocalTime? = null,
+        timeTo: LocalTime? = null
+    ): List<Bus> = dbQuery {
+        var query = Buses.selectAll()
+
+        departingFrom?.takeIf { it.isNotBlank() }?.let { origin ->
+            query = query.andWhere { Buses.departingFrom eq origin }
+        }
+        destinationEnglish?.takeIf { it.isNotBlank() }?.let { destination ->
+            query = query.andWhere { Buses.destinationEnglish eq destination }
+        }
+        if (timeFrom != null && timeTo != null) {
+            query = if (timeFrom <= timeTo) {
+                query.andWhere {
+                    (Buses.departTime greaterEq timeFrom) and (Buses.departTime lessEq timeTo)
+                }
+            } else {
+                query.andWhere {
+                    (Buses.departTime greaterEq timeFrom) or (Buses.departTime lessEq timeTo)
+                }
+            }
+        }
+
+        query.orderBy(Buses.departTime to SortOrder.ASC).map { it.toBus() }
     }
 
     suspend fun getBusById(busId: String): Bus? = dbQuery {
@@ -20,6 +45,18 @@ class BusService {
             .where { Buses.id eq busId }
             .map { it.toBus() }
             .singleOrNull()
+    }
+    suspend fun getBusDestinationEnglishByDepartingFrom(departingFrom: String): List<String> = dbQuery {
+        Buses.select(Buses.destinationEnglish)
+            .where { Buses.departingFrom eq departingFrom }
+            .map { it[Buses.destinationEnglish] }
+            .distinct()
+    }
+
+    suspend fun getAllDepartingFrom(): List<String> = dbQuery {
+        Buses.select(Buses.departingFrom)
+            .map { it[Buses.departingFrom] }
+            .distinct()
     }
 
     suspend fun addBus(bus: Bus): Bus = dbQuery {

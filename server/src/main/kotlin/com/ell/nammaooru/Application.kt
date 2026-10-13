@@ -11,6 +11,8 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.*
+import io.ktor.server.plugins.swagger.swaggerUI
+import io.ktor.server.http.content.staticResources
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -25,6 +27,14 @@ class UnauthorizedException : RuntimeException()
 
 val ApiKeyPlugin = createRouteScopedPlugin("ApiKeyPlugin") {
     onCall { call ->
+        val requestPath = call.request.path()
+        if (requestPath == "/openapi/documentation.yaml" ||
+            requestPath == "/swagger" ||
+            requestPath.startsWith("/swagger/")
+        ) {
+            return@onCall
+        }
+
         val apiKey = call.request.headers["X-API-Key"]
         val serverSecret = call.application.environment.config.propertyOrNull("ktor.security.apiKey")?.getString()
             ?: "my-secret-nammaooru-key"
@@ -79,6 +89,10 @@ fun Application.module() {
             call.respondText("Hello from Ktor")
         }
 
+        staticResources("/openapi", "openapi")
+        swaggerUI(path = "swagger", swaggerFile = "openapi/documentation.yaml") {
+            remotePath = "/openapi/documentation.yaml"
+        }
         busRoutes(busService)
     }
 }
