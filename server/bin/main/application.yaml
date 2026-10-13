@@ -1,0 +1,25 @@
+ktor:
+  development: true
+  deployment:
+    port: 8080
+    host: 0.0.0.0
+    watch:
+      - classes
+      - resources
+
+  application:
+    modules:
+      - com.ell.nammaooru.ApplicationKt.module
+  security:
+    apiKey: ${NAMMAOORU_API_KEY:-my-secret-nammaooru-key}
+  database:
+    driverClassName: "com.mysql.cj.jdbc.Driver"
+    jdbcUrl: ${DB_URL:"jdbc:mysql://localhost:3306/nammaooru"}
+    username: ${DB_USER:-root"}
+    password: ${DB_PASSWORD:"root"}
+
+logger:
+  level: INFO
+
+  loggers:
+    io.ktor.server.routing: INFO
