@@ -1,201 +1,127 @@
 package com.ell.nammaooru.ui.widgets
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Apps
-import androidx.compose.material.icons.outlined.CarRental
+import androidx.compose.material.icons.outlined.ArrowDropDown
 import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material.icons.outlined.Menu
-import androidx.compose.material.icons.outlined.Navigation
-import androidx.compose.material.icons.outlined.Timelapse
-import androidx.compose.material.icons.outlined.Timeline
-import androidx.compose.material.icons.outlined.Timer
-import androidx.compose.material.icons.outlined.Timer3
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
-
-data class LocationRoute(val icon: ImageVector, val stop: String,val isSelected: Boolean= false)
-
-val dummyList = mutableListOf<LocationRoute>(
-    LocationRoute(Icons.Outlined.Apps, "All Buses", true),
-    LocationRoute(Icons.Outlined.Navigation, "To Kallakurichi", false),
-    LocationRoute(Icons.Outlined.Navigation, "To Sankrapuram",false),
-    LocationRoute(Icons.Outlined.Navigation, "To Thiruvannamalai",false),
-    LocationRoute(Icons.Outlined.CarRental, "Govt TNSTC",false),
-    LocationRoute(Icons.Outlined.CarRental, "Private Express",false),
-)
-
 @Composable
-fun DepartingFromCard() {
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-//            .background(Color(0xFFEDEDED))
-            .background(MaterialTheme.colorScheme.surfaceContainerLowest)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center
+fun DepartingFromCard(
+    origins: List<String>,
+    selectedOrigin: String?,
+    destinations: List<String>,
+    selectedDestination: String?,
+    onOriginSelected: (String?) -> Unit,
+    onDestinationSelected: (String?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
+        shape = RoundedCornerShape(8.dp)
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                ) {
-                    Row(
-                        modifier = Modifier,
-                        verticalAlignment = Alignment.CenterVertically
-
-
-                    ) {
-                        Icon(
-                            Icons.Outlined.LocationOn,
-                            contentDescription = "Settings",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            "ORIGIN BAY",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        "Departing from Viriyur",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        "விரியூர் கிராமப் பேருந்து",
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-
-                TimeChipsCard(
-                    icon = Icons.Outlined.Timer,
-                    text = "12:30 AM"
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Icon(
+                    Icons.Outlined.LocationOn,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    "Choose your route",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
                 )
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-            LazyRow {
-                items(dummyList.size) {
-                    LocationFilterChips(
-                        icon = dummyList[it].icon,
-                        text = dummyList[it].stop,
-                        isSelected = dummyList[it].isSelected,
-                        onClick = {
-                            dummyList[it] = dummyList[it].copy(isSelected = !dummyList[it].isSelected)
-                        }
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                LocationDropdown(
+                    label = "Departing from",
+                    value = selectedOrigin ?: "All origins",
+                    choices = origins,
+                    allLabel = "All origins",
+                    onSelected = onOriginSelected,
+                    modifier = Modifier.weight(1f)
+                )
+                LocationDropdown(
+                    label = "Destination",
+                    value = selectedDestination ?: "All destinations",
+                    choices = destinations,
+                    allLabel = "All destinations",
+                    onSelected = onDestinationSelected,
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }
 }
 
 @Composable
-fun TimeChipsCard(icon: ImageVector, text: String) {
+private fun LocationDropdown(
+    label: String,
+    value: String,
+    choices: List<String>,
+    allLabel: String,
+    onSelected: (String?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
 
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(50.dp))
-
-            .background(Color(0xFFE8ECE9))
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-
-        Icon(
-            icon,
-            contentDescription = "Settings",
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.width(2.dp))
-        Text(
-            text,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = FontWeight.SemiBold
-            ),
-        )
+    Column(modifier = modifier) {
+        Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        androidx.compose.foundation.layout.Box {
+            OutlinedButton(
+                onClick = { expanded = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    value,
+                    modifier = Modifier.weight(1f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Icon(Icons.Outlined.ArrowDropDown, contentDescription = "Choose $label")
+            }
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                DropdownMenuItem(
+                    text = { Text(allLabel) },
+                    onClick = {
+                        onSelected(null)
+                        expanded = false
+                    }
+                )
+                choices.forEach { choice ->
+                    DropdownMenuItem(
+                        text = { Text(choice) },
+                        onClick = {
+                            onSelected(choice)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
     }
-}
-
-
-@Composable
-fun LocationFilterChips(icon: ImageVector, text: String, isSelected: Boolean, onClick: () -> Unit) {
-
-    Row(
-        modifier = Modifier
-            .clip(CircleShape)
-
-            .background(if (isSelected) MaterialTheme.colorScheme.primary else Color(0xFFE8ECE9))
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-
-        Icon(
-            icon,
-            contentDescription = "Settings",
-            tint = if (isSelected) Color.White else Color.Gray,
-            modifier = Modifier.size(12.dp)
-        )
-        Spacer(modifier = Modifier.width(2.dp))
-        Text(
-            text,
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = FontWeight.SemiBold
-            ),
-            color = if (isSelected) Color.White else Color.Gray,
-        )
-    }
-}
-
-@Preview
-@Composable
-fun DepartingFromCardPreview() {
-    Box(
-        modifier = Modifier
-            .background(Color(0xFFF7F7F7))
-            .padding(16.dp)
-    ) {
-        DepartingFromCard()
-    }
-
 }

@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -37,6 +38,8 @@ import com.ell.nammaooru.ui.screens.sampleBuses
 @Composable
 fun BusCard(
     bus: Bus,
+    showTamilName: Boolean = true,
+    showDepartureLocation: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val (timeText, amPmText) = parseDepartTime(bus.departTime)
@@ -108,7 +111,7 @@ fun BusCard(
                     }
 
 
-                    if (bus.destinationTamil.isNotBlank()) {
+                    if (showTamilName && bus.destinationTamil.isNotBlank()) {
                         if (bus.destinationEnglish.isNotBlank()) {
                             append(" ")
                         }
@@ -129,6 +132,16 @@ fun BusCard(
                         modifier = Modifier/*.horizontalScroll(rememberScrollState())*/,
                         text = titleText,
                         maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                if (showDepartureLocation && bus.departingFrom.isNotBlank()) {
+                    Text(
+                        text = "From ${bus.departingFrom}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF6E6E6E),
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }

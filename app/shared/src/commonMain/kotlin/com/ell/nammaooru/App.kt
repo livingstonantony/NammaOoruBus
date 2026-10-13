@@ -1,51 +1,90 @@
 package com.ell.nammaooru
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContentPadding
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.DirectionsBus
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import com.ell.nammaooru.ui.screens.BusesScreen
+import com.ell.nammaooru.ui.screens.AddBusScreen
+import com.ell.nammaooru.ui.screens.SettingsScreen
 import com.ell.nammaooru.ui.theme.AppTheme
-import org.jetbrains.compose.resources.painterResource
+import com.ell.nammaooru.ui.widgets.TimeFilter
 
-import nammaooru.app.shared.generated.resources.Res
-import nammaooru.app.shared.generated.resources.compose_multiplatform
+private enum class MainTab(val title: String, val icon: ImageVector) {
+    UPCOMING("Next", Icons.Outlined.DirectionsBus),
+    DAILY("Daily", Icons.Outlined.Schedule),
+    ADD_BUS("Add bus", Icons.Outlined.Add),
+    SETTINGS("Settings", Icons.Outlined.Settings)
+}
 
 @Composable
 @Preview
 fun App() {
     AppTheme {
+        var selectedTab by remember { mutableStateOf(MainTab.UPCOMING) }
+        var departureLocation by remember { mutableStateOf<String?>("Viriyur") }
+        var destination by remember { mutableStateOf<String?>(null) }
+        var timeFilter by remember { mutableStateOf(TimeFilter.ALL_DAY) }
+        var showTamilNames by remember { mutableStateOf(true) }
 
-        Scaffold { paddingValues ->
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            bottomBar = {
+                NavigationBar {
+                    MainTab.entries.forEach { tab ->
+                        NavigationBarItem(
+                            selected = selectedTab == tab,
+                            onClick = { selectedTab = tab },
+                            icon = { Icon(tab.icon, contentDescription = tab.title) },
+                            label = { Text(tab.title) }
+                        )
+                    }
+                }
+            }
+        ) { paddingValues ->
+            when (selectedTab) {
+                MainTab.UPCOMING,
+                MainTab.DAILY -> BusesScreen(
+                    showFullTimetable = selectedTab == MainTab.DAILY,
+                    selectedDepartureLocation = departureLocation,
+                    onDepartureLocationSelected = {
+                        departureLocation = it
+                        destination = null
+                    },
+                    selectedDestination = destination,
+                    onDestinationSelected = { destination = it },
+                    selectedTimeFilter = timeFilter,
+                    onTimeFilterSelected = { timeFilter = it },
+                    showTamilNames = showTamilNames,
+                    onOpenFullTimetable = { selectedTab = MainTab.DAILY },
+                    modifier = Modifier.padding(paddingValues)
+                )
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFFF7F7F7))
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
+                MainTab.ADD_BUS -> AddBusScreen(
+                    modifier = Modifier.padding(paddingValues)
+                )
 
-            ) {
-                BusesScreen()
-
+                MainTab.SETTINGS -> SettingsScreen(
+                    departureLocation = departureLocation,
+                    showTamilNames = showTamilNames,
+                    onTamilNamesChanged = { showTamilNames = it },
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
             }
 
-
-        }
 
     }
 }

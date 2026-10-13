@@ -29,11 +29,14 @@ import androidx.compose.ui.unit.sp
 
 enum class TimeFilter(
     val title: String,
-    val timeRange: String
+    val timeRange: String,
+    val startMinute: Int,
+    val endMinuteExclusive: Int
 ) {
-    MORNING("Morning", "05 AM - 12 PM"),
-    AFTERNOON("Afternoon", "12 PM - 05 PM"),
-    EVENING("Evening", "05 PM - 10 PM")
+    ALL_DAY("All day", "All departures", 0, 1440),
+    MORNING("Morning", "05 AM - 12 PM", 300, 720),
+    AFTERNOON("Afternoon", "12 PM - 05 PM", 720, 1020),
+    EVENING("Evening", "05 PM - 10 PM", 1020, 1320)
 }
 
 @Composable
