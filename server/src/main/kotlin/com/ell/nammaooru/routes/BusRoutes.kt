@@ -3,7 +3,9 @@ package com.ell.nammaooru.routes
 import com.ell.nammaooru.data.Bus
 import com.ell.nammaooru.data.Response
 import com.ell.nammaooru.services.BusService
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.openapi.jsonSchema
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -12,13 +14,15 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
+import io.ktor.server.routing.openapi.describe
+import io.ktor.utils.io.ExperimentalKtorApi
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
 
+@OptIn(ExperimentalKtorApi::class)
 fun Route.busRoutes(busService: BusService) {
-    busCollectionRoutes(busService, "/api/v1/buses", "busId")
-    busCollectionRoutes(busService, "/busService", "id")
+    busCollectionRoutes(busService)
 
     route("/api/v1/departure-locations") {
         get {
@@ -29,6 +33,17 @@ fun Route.busRoutes(busService: BusService) {
                     data = busService.getAllDepartingFrom()
                 )
             )
+        }.describe {
+            summary = "List departure locations"
+            tag("Departure locations")
+            responses {
+                HttpStatusCode.OK {
+                    description = "Departure locations read from the timetable."
+                    ContentType.Application.Json {
+                        schema = jsonSchema<Response<List<String>>>()
+                    }
+                }
+            }
         }
 
         get("/{departureLocation}/destinations") {
@@ -52,51 +67,33 @@ fun Route.busRoutes(busService: BusService) {
                     data = busService.getBusDestinationEnglishByDepartingFrom(departureLocation)
                 )
             )
-        }
-    }
-
-    route("/busService") {
-        get("/departingFrom") {
-            call.respond(
-                Response(
-                    result = "success",
-                    message = "Bus departingFrom fetched successfully",
-                    data = busService.getAllDepartingFrom()
-                )
-            )
-        }
-
-        get("/departingFromDestinations/{departingFrom}") {
-            val departingFrom = call.parameters["departingFrom"]
-            if (departingFrom == null) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    Response(
-                        result = "failed",
-                        message = "Departure location is required",
-                        data = null
-                    )
-                )
-                return@get
+        }.describe {
+            summary = "List destinations for a departure location"
+            tag("Departure locations")
+            parameters {
+                path("departureLocation") {
+                    description = "Origin bus stop."
+                    schema = jsonSchema<String>()
+                }
             }
-
-            call.respond(
-                Response(
-                    result = "success",
-                    message = "Destinations fetched successfully",
-                    data = busService.getBusDestinationEnglishByDepartingFrom(departingFrom)
-                )
-            )
+            responses {
+                HttpStatusCode.OK {
+                    description = "English destinations available from this location."
+                    ContentType.Application.Json {
+                        schema = jsonSchema<Response<List<String>>>()
+                    }
+                }
+                HttpStatusCode.BadRequest {
+                    description = "The departure location is required."
+                }
+            }
         }
     }
 }
 
-private fun Route.busCollectionRoutes(
-    busService: BusService,
-    path: String,
-    busIdParameter: String
-) {
-    route(path) {
+@OptIn(ExperimentalKtorApi::class)
+private fun Route.busCollectionRoutes(busService: BusService) {
+    route("/api/v1/buses") {
         get {
             val queryParameters = call.request.queryParameters
             val timeFromParameter = queryParameters["departureTimeFrom"] ?: queryParameters["timeFrom"]
@@ -132,10 +129,43 @@ private fun Route.busCollectionRoutes(
                     )
                 )
             )
+        }.describe {
+            summary = "List buses"
+            description = "Filters by departure location, English destination, and optional inclusive departure-time range."
+            tag("Buses")
+            parameters {
+                query("departureLocation") {
+                    description = "Filter by origin bus stop."
+                    schema = jsonSchema<String>()
+                }
+                query("destination") {
+                    description = "Filter by English destination name."
+                    schema = jsonSchema<String>()
+                }
+                query("departureTimeFrom") {
+                    description = "Inclusive lower time bound in 24-hour HH:mm format; provide with departureTimeTo."
+                    schema = jsonSchema<String>()
+                }
+                query("departureTimeTo") {
+                    description = "Inclusive upper time bound in 24-hour HH:mm format; provide with departureTimeFrom."
+                    schema = jsonSchema<String>()
+                }
+            }
+            responses {
+                HttpStatusCode.OK {
+                    description = "Matching buses ordered by departure time."
+                    ContentType.Application.Json {
+                        schema = jsonSchema<Response<List<Bus>>>()
+                    }
+                }
+                HttpStatusCode.BadRequest {
+                    description = "The departure-time range is incomplete or invalid."
+                }
+            }
         }
 
-        get("/{$busIdParameter}") {
-            val busId = call.parameters[busIdParameter]
+        get("/{busId}") {
+            val busId = call.parameters["busId"]
             if (busId == null) {
                 call.respond(
                     HttpStatusCode.BadRequest,
@@ -155,6 +185,26 @@ private fun Route.busCollectionRoutes(
                     Response(result = "success", message = "Bus fetched successfully", data = bus)
                 )
             }
+        }.describe {
+            summary = "Get a bus"
+            tag("Buses")
+            parameters {
+                path("busId") {
+                    description = "Bus identifier."
+                    schema = jsonSchema<String>()
+                }
+            }
+            responses {
+                HttpStatusCode.OK {
+                    description = "Bus found."
+                    ContentType.Application.Json {
+                        schema = jsonSchema<Response<Bus>>()
+                    }
+                }
+                HttpStatusCode.NotFound {
+                    description = "No bus exists with this identifier."
+                }
+            }
         }
 
         post {
@@ -171,10 +221,31 @@ private fun Route.busCollectionRoutes(
                     Response(result = "failed", message = "Invalid bus data: $e", data = null)
                 )
             }
+        }.describe {
+            summary = "Create a bus"
+            tag("Buses")
+            requestBody {
+                required = true
+                description = "Bus timetable record to create."
+                ContentType.Application.Json {
+                    schema = jsonSchema<Bus>()
+                }
+            }
+            responses {
+                HttpStatusCode.Created {
+                    description = "Bus created."
+                    ContentType.Application.Json {
+                        schema = jsonSchema<Response<Bus>>()
+                    }
+                }
+                HttpStatusCode.BadRequest {
+                    description = "The bus request body is invalid."
+                }
+            }
         }
 
-        put("/{$busIdParameter}") {
-            val busId = call.parameters[busIdParameter]
+        put("/{busId}") {
+            val busId = call.parameters["busId"]
             if (busId == null) {
                 call.respond(
                     HttpStatusCode.BadRequest,
@@ -202,10 +273,40 @@ private fun Route.busCollectionRoutes(
                     Response(result = "failed", message = "Invalid bus data: $e", data = null)
                 )
             }
+        }.describe {
+            summary = "Replace a bus"
+            tag("Buses")
+            parameters {
+                path("busId") {
+                    description = "Bus identifier."
+                    schema = jsonSchema<String>()
+                }
+            }
+            requestBody {
+                required = true
+                description = "Replacement bus timetable record."
+                ContentType.Application.Json {
+                    schema = jsonSchema<Bus>()
+                }
+            }
+            responses {
+                HttpStatusCode.OK {
+                    description = "Bus updated."
+                    ContentType.Application.Json {
+                        schema = jsonSchema<Response<Bus>>()
+                    }
+                }
+                HttpStatusCode.BadRequest {
+                    description = "The bus request body is invalid."
+                }
+                HttpStatusCode.NotFound {
+                    description = "No bus exists with this identifier."
+                }
+            }
         }
 
-        delete("/{$busIdParameter}") {
-            val busId = call.parameters[busIdParameter]
+        delete("/{busId}") {
+            val busId = call.parameters["busId"]
             if (busId == null) {
                 call.respond(
                     HttpStatusCode.BadRequest,
@@ -225,6 +326,23 @@ private fun Route.busCollectionRoutes(
             call.respond(
                 Response(result = "success", message = "Bus deleted successfully", data = null)
             )
+        }.describe {
+            summary = "Delete a bus"
+            tag("Buses")
+            parameters {
+                path("busId") {
+                    description = "Bus identifier."
+                    schema = jsonSchema<String>()
+                }
+            }
+            responses {
+                HttpStatusCode.OK {
+                    description = "Bus deleted."
+                }
+                HttpStatusCode.NotFound {
+                    description = "No bus exists with this identifier."
+                }
+            }
         }
     }
 }

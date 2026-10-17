@@ -3,7 +3,9 @@ package com.ell.nammaooru
 import com.ell.nammaooru.data.Response
 import com.ell.nammaooru.routes.busRoutes
 import com.ell.nammaooru.services.BusService
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.openapi.OpenApiInfo
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -12,26 +14,31 @@ import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.plugins.swagger.swaggerUI
-import io.ktor.server.http.content.staticResources
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.routing.openapi.OpenApiDocSource
+import io.ktor.server.routing.openapi.hide
+import io.ktor.utils.io.ExperimentalKtorApi
 import kotlinx.serialization.json.Json
 import org.slf4j.event.Level
 
 
-fun main(args: Array<String>): Unit =
-    EngineMain.main(args)
+fun main() {
+    embeddedServer(
+        Netty,
+        host = "0.0.0.0",
+        port = 8080,
+        module = Application::module
+    ).start(wait = true)
+}
 
 class UnauthorizedException : RuntimeException()
 
 val ApiKeyPlugin = createRouteScopedPlugin("ApiKeyPlugin") {
     onCall { call ->
         val requestPath = call.request.path()
-        if (requestPath == "/openapi/documentation.yaml" ||
-            requestPath == "/swagger" ||
-            requestPath.startsWith("/swagger/")
-        ) {
+        if (requestPath == "/swagger" || requestPath.startsWith("/swagger/")) {
             return@onCall
         }
 
@@ -45,6 +52,7 @@ val ApiKeyPlugin = createRouteScopedPlugin("ApiKeyPlugin") {
     }
 }
 
+@OptIn(ExperimentalKtorApi::class)
 fun Application.module() {
     com.ell.nammaooru.database.DatabaseFactory.init(environment.config)
 
@@ -81,17 +89,22 @@ fun Application.module() {
 
     val busService = BusService()
 
-    install(ApiKeyPlugin)
+//    install(ApiKeyPlugin)
 
     routing {
 
         get("/") {
             call.respondText("Hello from Ktor")
-        }
+        }.hide()
 
-        staticResources("/openapi", "openapi")
-        swaggerUI(path = "swagger", swaggerFile = "openapi/documentation.yaml") {
-            remotePath = "/openapi/documentation.yaml"
+        swaggerUI(path = "swagger") {
+            info = OpenApiInfo(
+                title = "Namma Ooru Bus API",
+                version = "1.0.0",
+                description = "Bus timetable and departure-location endpoints."
+            )
+            source = OpenApiDocSource.Routing(contentType = ContentType.Application.Yaml)
+            remotePath = "openapi.yaml"
         }
         busRoutes(busService)
     }

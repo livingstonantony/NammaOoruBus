@@ -26,6 +26,7 @@ dependencies {
     implementation(libs.ktor.serverAuth)
     implementation(libs.ktor.serverStatusPages)
     implementation(libs.ktor.server.swagger)
+    implementation(libs.ktor.server.routing.openapi)
     
     // Database
     implementation(libs.exposed.core)

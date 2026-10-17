@@ -37,9 +37,13 @@ class ApplicationTest {
             module()
         }
 
-        val documentResponse = client.get("/openapi/documentation.yaml")
+        val documentResponse = client.get("/swagger/openapi.yaml")
         assertEquals(HttpStatusCode.OK, documentResponse.status)
-        assertContains(documentResponse.bodyAsText(), "openapi: 3.0.3")
+        val document = documentResponse.bodyAsText()
+        assertContains(document, "openapi:")
+        assertContains(document, "/api/v1/buses:")
+        assertContains(document, "/api/v1/departure-locations:")
+        assertContains(document, "List buses")
 
         val swaggerResponse = client.get("/swagger")
         assertEquals(HttpStatusCode.OK, swaggerResponse.status)
@@ -136,9 +140,8 @@ class ApplicationTest {
 
             val legacyResponse = client.get("/busService") {
                 header("X-API-Key", "my-secret-nammaooru-key")
-                parameter("departingFrom", testOrigin)
             }
-            assertEquals(HttpStatusCode.OK, legacyResponse.status)
+            assertEquals(HttpStatusCode.NotFound, legacyResponse.status)
 
             val missingBusDeleteResponse = client.delete("/api/v1/buses/missing-${UUID.randomUUID()}") {
                 header("X-API-Key", "my-secret-nammaooru-key")
@@ -172,7 +175,7 @@ class ApplicationTest {
     fun testEngineMain() {
         val thread = Thread {
             try {
-                main(emptyArray())
+                main()
             } catch (e: Throwable) {
                 e.printStackTrace()
             }
