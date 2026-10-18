@@ -208,7 +208,7 @@ fun BusesScreen(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Timetable unavailable", style = MaterialTheme.typography.titleMedium)
+                Text("Timetable unavailable: ${state.message}", style = MaterialTheme.typography.titleMedium)
                 Text(state.message, modifier = Modifier.padding(top = 8.dp, bottom = 16.dp))
                 Button(onClick = { viewModel.processIntent(BusIntent.GetBuses) }) {
                     Text("Try again")
