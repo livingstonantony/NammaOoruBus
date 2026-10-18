@@ -30,6 +30,18 @@ android {
         versionCode = 1
         versionName = "1.0"
     }
+    flavorDimensions += "role"
+    productFlavors {
+        create("guest") {
+            dimension = "role"
+            isDefault = true
+        }
+        create("admin") {
+            dimension = "role"
+            applicationIdSuffix = ".admin"
+            versionNameSuffix = "-admin"
+        }
+    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"

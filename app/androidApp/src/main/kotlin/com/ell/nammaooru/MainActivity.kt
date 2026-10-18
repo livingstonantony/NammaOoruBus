@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
         initKoin()
 
         setContent {
-            App()
+            App(flavorAppMode)
         }
     }
 }
@@ -24,5 +24,5 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun AppAndroidPreview() {
-    App()
+    App(flavorAppMode)
 }

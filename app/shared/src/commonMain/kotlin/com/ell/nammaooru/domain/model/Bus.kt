@@ -16,7 +16,7 @@ enum class Days {
 
 @Serializable
 data class Bus(
-    val id: String,
+    val id: String = "",
     val departingFrom: String,
     val destinationEnglish: String,
     val destinationTamil: String,

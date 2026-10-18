@@ -22,6 +22,13 @@ sealed interface UiState<out T> {
     ) : UiState<Nothing>
 }
 
+sealed interface OperationState {
+    data object Idle : OperationState
+    data object Loading : OperationState
+    data class Success(val message: String) : OperationState
+    data class Error(val message: String) : OperationState
+}
+
 sealed class BusIntent {
     object GetBuses : BusIntent()
     data class GetBus(val id: String) : BusIntent()
@@ -39,15 +46,12 @@ class BusViewModel(val repository: BusRepository) : ViewModel() {
     private val _stateBus = MutableStateFlow<UiState<Bus?>>(UiState.Loading)
     val stateBus: StateFlow<UiState<Bus?>> = _stateBus.asStateFlow()
 
-    private val _stateCreateBus = MutableStateFlow<UiState<Bus?>>(UiState.Loading)
-    val stateCreateBus: StateFlow<UiState<Bus?>> = _stateCreateBus.asStateFlow()
+    private val _stateOperation = MutableStateFlow<OperationState>(OperationState.Idle)
+    val stateOperation: StateFlow<OperationState> = _stateOperation.asStateFlow()
 
-    private val _stateUpdateBus = MutableStateFlow<UiState<Bus?>>(UiState.Loading)
-    val stateUpdateBus: StateFlow<UiState<Bus?>> = _stateUpdateBus.asStateFlow()
-
-    private val _stateDeleteBus = MutableStateFlow<UiState<Any?>>(UiState.Loading)
-    val stateDeleteBus: StateFlow<UiState<Any?>> = _stateDeleteBus.asStateFlow()
-
+    fun clearOperation() {
+        _stateOperation.value = OperationState.Idle
+    }
 
     fun processIntent(intent: BusIntent) {
         viewModelScope.launch {
@@ -96,50 +100,27 @@ class BusViewModel(val repository: BusRepository) : ViewModel() {
                 _stateBus.value = UiState.Success(response.data)
             },
             onFailure = {
-                _stateBuses.value = UiState.Error(it.message ?: "Something went wrong")
+                _stateBus.value = UiState.Error(it.message ?: "Something went wrong")
             }
         )
     }
 
-    suspend fun createBus(bus: Bus) {
-        _stateCreateBus.value = UiState.Loading
-        repository.createBus(bus).fold(
+    suspend fun createBus(bus: Bus) = runWrite("Bus added") { repository.createBus(bus) }
+
+    suspend fun updateBus(id: String, bus: Bus) = runWrite("Bus updated") { repository.updateBus(id, bus) }
+
+    suspend fun deleteBus(id: String) = runWrite("Bus deleted") { repository.deleteBus(id) }
+
+    private suspend fun <T> runWrite(successMessage: String, call: suspend () -> Result<T>) {
+        _stateOperation.value = OperationState.Loading
+        call().fold(
             onSuccess = {
-                _stateCreateBus.value = UiState.Success(it.data)
+                _stateOperation.value = OperationState.Success(successMessage)
                 getBuses()
             },
             onFailure = {
-                _stateCreateBus.value = UiState.Error(it.message ?: "Something went wrong")
-            }
-        )
-
-    }
-
-    suspend fun updateBus(id: String, bus: Bus) {
-        _stateUpdateBus.value = UiState.Loading
-        repository.updateBus(id, bus).fold(
-            onSuccess = {
-                _stateUpdateBus.value = UiState.Success(it.data)
-                getBuses()
-            },
-            onFailure = {
-                _stateUpdateBus.value = UiState.Error(it.message ?: "Something went wrong")
+                _stateOperation.value = OperationState.Error(it.message ?: "Something went wrong")
             }
         )
     }
-
-    suspend fun deleteBus(id: String) {
-        _stateDeleteBus.value = UiState.Loading
-        repository.deleteBus(id).fold(
-            onSuccess = {
-                _stateDeleteBus.value = UiState.Success(it.data)
-                getBuses()
-            },
-            onFailure = {
-                _stateDeleteBus.value = UiState.Error(it.message ?: "Something went wrong")
-            }
-        )
-    }
-
-
 }

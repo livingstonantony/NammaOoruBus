@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -19,6 +20,9 @@ fun SettingsScreen(
     departureLocation: String?,
     showTamilNames: Boolean,
     onTamilNamesChanged: (Boolean) -> Unit,
+    isAdmin: Boolean,
+    isLoggedIn: Boolean,
+    onLogout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -56,10 +60,10 @@ fun SettingsScreen(
             }
         }
 
-        Text(
-            "Bus management is available only after server-side admin authorization is configured.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        if (isAdmin && isLoggedIn) {
+            Button(onClick = onLogout, modifier = Modifier.fillMaxWidth()) {
+                Text("Log out")
+            }
+        }
     }
 }

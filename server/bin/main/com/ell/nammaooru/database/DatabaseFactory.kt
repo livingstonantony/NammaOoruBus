@@ -44,7 +44,8 @@ object DatabaseFactory {
             Database.connect(dataSource)
 
             transaction {
-                SchemaUtils.createMissingTablesAndColumns(Users, RefreshTokens, Buses)
+                arrayOf(Users, RefreshTokens, Buses)
+                Unit
             }
         } catch (e: Exception) {
             System.err.println("Database initialization failed: ${e.message}")

@@ -15,6 +15,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,6 +45,8 @@ fun BusCard(
     bus: Bus,
     showTamilName: Boolean = true,
     showDepartureLocation: Boolean = false,
+    onEdit: (() -> Unit)? = null,
+    onDelete: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val (timeText, amPmText) = parseDepartTime(bus.departTime)
@@ -204,6 +211,17 @@ fun BusCard(
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF4A4A4A)
                 )
+            }
+
+            if (onEdit != null) {
+                IconButton(onClick = onEdit) {
+                    Icon(Icons.Outlined.Edit, contentDescription = "Edit bus")
+                }
+            }
+            if (onDelete != null) {
+                IconButton(onClick = onDelete) {
+                    Icon(Icons.Outlined.Delete, contentDescription = "Delete bus", tint = MaterialTheme.colorScheme.error)
+                }
             }
         }
     }

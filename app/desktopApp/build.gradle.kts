@@ -18,6 +18,8 @@ dependencies {
 compose.desktop {
     application {
         mainClass = "com.ell.nammaooru.MainKt"
+        // Run the admin build with: ./gradlew :app:desktopApp:run -PappMode=admin
+        (findProperty("appMode") as String?)?.let { jvmArgs += "-Dnammaooru.mode=$it" }
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)

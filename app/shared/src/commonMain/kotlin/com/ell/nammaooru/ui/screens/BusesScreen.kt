@@ -56,6 +56,9 @@ fun BusesScreen(
     showTamilNames: Boolean,
     onOpenFullTimetable: () -> Unit,
     modifier: Modifier = Modifier,
+    isAdmin: Boolean = false,
+    onEditBus: (Bus) -> Unit = {},
+    onDeleteBus: (Bus) -> Unit = {},
     viewModel: BusViewModel = koinViewModel()
 ) {
     val uiState by viewModel.stateBuses.collectAsState()
@@ -103,8 +106,12 @@ fun BusesScreen(
                 destination = selectedDestination?.takeIf { it in destinations },
                 timeFilter = selectedTimeFilter
             )
-            val todayBuses = busesForDay(filteredBuses, currentLocalDateTime.dayOfWeek.toBusDay())
-            val visibleBuses = if (showFullTimetable) {
+            val todayBuses = if (isAdmin) {
+                filteredBuses
+            } else {
+                busesForDay(filteredBuses, currentLocalDateTime.dayOfWeek.toBusDay())
+            }
+            val visibleBuses = if (showFullTimetable || isAdmin) {
                 todayBuses
             } else {
                 upcomingBuses(
@@ -125,7 +132,7 @@ fun BusesScreen(
             ) {
                 item {
                     TimetableHeader(
-                        showFullTimetable = showFullTimetable,
+                        showFullTimetable = showFullTimetable || isAdmin,
                         onRefresh = { viewModel.processIntent(BusIntent.GetBuses) }
                     )
                 }
@@ -176,7 +183,9 @@ fun BusesScreen(
                         BusCard(
                             bus = bus,
                             showTamilName = showTamilNames,
-                            showDepartureLocation = activeOrigin == null
+                            showDepartureLocation = activeOrigin == null,
+                            onEdit = if (isAdmin) ({ onEditBus(bus) }) else null,
+                            onDelete = if (isAdmin) ({ onDeleteBus(bus) }) else null
                         )
                     }
                     if (!showFullTimetable && todayBuses.size > visibleBuses.size) {
