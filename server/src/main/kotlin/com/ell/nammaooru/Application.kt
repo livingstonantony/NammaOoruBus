@@ -10,6 +10,8 @@ import com.ell.nammaooru.services.AuthService
 import com.ell.nammaooru.services.BusService
 import com.ell.nammaooru.services.UserService
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.openapi.OpenApiInfo
 import io.ktor.serialization.kotlinx.json.json
@@ -20,6 +22,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.swagger.swaggerUI
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -72,6 +75,16 @@ fun Application.module() {
         format { call ->
             "${call.request.httpMethod.value} ${call.request.uri} -> ${call.response.status()}"
         }
+    }
+
+    install(CORS) {
+        // Browser (wasm/js) clients run on a different localhost port.
+        allowOrigins { it.startsWith("http://localhost:") || it.startsWith("http://127.0.0.1:") }
+        allowMethod(HttpMethod.Put)
+        allowMethod(HttpMethod.Delete)
+        allowMethod(HttpMethod.Options)
+        allowHeader(HttpHeaders.Authorization)
+        allowHeader(HttpHeaders.ContentType)
     }
 
     install(ContentNegotiation) {

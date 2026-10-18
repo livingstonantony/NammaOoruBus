@@ -1,16 +1,12 @@
 package com.ell.nammaooru
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -67,7 +63,6 @@ fun App(mode: AppMode = AppMode.Guest) {
         var destination by remember { mutableStateOf<String?>(null) }
         var timeFilter by remember { mutableStateOf(TimeFilter.ALL_DAY) }
         var showTamilNames by remember { mutableStateOf(true) }
-        var showFullTimetable by remember { mutableStateOf(false) }
         var showForm by remember { mutableStateOf(false) }
         var editingBus by remember { mutableStateOf<Bus?>(null) }
         var busPendingDelete by remember { mutableStateOf<Bus?>(null) }
@@ -166,25 +161,8 @@ fun App(mode: AppMode = AppMode.Guest) {
                 )
 
                 else -> Column(modifier = contentModifier) {
-                    if (!isAdmin) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            FilterChip(
-                                selected = !showFullTimetable,
-                                onClick = { showFullTimetable = false },
-                                label = { Text("Next") }
-                            )
-                            FilterChip(
-                                selected = showFullTimetable,
-                                onClick = { showFullTimetable = true },
-                                label = { Text("Daily") }
-                            )
-                        }
-                    }
                     BusesScreen(
-                        showFullTimetable = isAdmin || showFullTimetable,
+                        showFullTimetable = true,
                         selectedDepartureLocation = departureLocation,
                         onDepartureLocationSelected = {
                             departureLocation = it
@@ -195,7 +173,7 @@ fun App(mode: AppMode = AppMode.Guest) {
                         selectedTimeFilter = timeFilter,
                         onTimeFilterSelected = { timeFilter = it },
                         showTamilNames = showTamilNames,
-                        onOpenFullTimetable = { showFullTimetable = true },
+                        onOpenFullTimetable = {},
                         isAdmin = isAdmin,
                         onEditBus = {
                             editingBus = it
