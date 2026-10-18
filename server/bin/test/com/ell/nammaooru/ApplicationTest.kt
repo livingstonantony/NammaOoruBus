@@ -56,6 +56,11 @@ class ApplicationTest {
         assertContains(document, "/api/v1/auth/guest-token:")
         assertContains(document, "List buses")
         assertContains(document, "A valid Bearer access token is required.")
+        assertContains(document, "guest tokens are read-only")
+        assertContains(document, "securitySchemes:")
+        assertContains(document, "auth-jwt:")
+        assertContains(document, "bearerFormat: JWT")
+        assertContains(document, "auth-jwt: []")
 
         val swaggerResponse = client.get("/swagger")
         assertEquals(HttpStatusCode.OK, swaggerResponse.status)
@@ -68,6 +73,20 @@ class ApplicationTest {
         }
 
         client.get("/")
+
+        val unauthenticatedRead = client.get("/api/v1/buses")
+        assertEquals(HttpStatusCode.Unauthorized, unauthenticatedRead.status)
+        assertEquals(HttpStatusCode.Unauthorized, client.get("/api/v1/buses/${UUID.randomUUID()}").status)
+        assertEquals(HttpStatusCode.Unauthorized, client.get("/api/v1/departure-locations").status)
+        assertEquals(
+            HttpStatusCode.Unauthorized,
+            client.get("/api/v1/departure-locations/test/destinations").status
+        )
+
+        val guestTokenResponse = client.get("/api/v1/auth/guest-token")
+        assertEquals(HttpStatusCode.OK, guestTokenResponse.status)
+        val guestToken = Json.decodeFromString<Response<GuestTokenResponse>>(guestTokenResponse.bodyAsText()).data!!
+        val authorization = "Bearer ${guestToken.accessToken}"
 
         val busService = BusService()
         val testOrigin = "FilterTest${UUID.randomUUID()}"
@@ -119,6 +138,7 @@ class ApplicationTest {
 
         try {
             val response = client.get("/api/v1/buses") {
+                header(HttpHeaders.Authorization, authorization)
                 parameter("departureLocation", testOrigin)
                 parameter("destination", testDestination)
                 parameter("departureTimeFrom", "05:00")
@@ -129,15 +149,25 @@ class ApplicationTest {
             val payload = Json.decodeFromString<Response<List<Bus>>>(response.bodyAsText())
             assertEquals(listOf(buses.first().id), payload.data?.map { it.id })
 
-            val originsResponse = client.get("/api/v1/departure-locations")
+            val busDetailResponse = client.get("/api/v1/buses/${buses.first().id}") {
+                header(HttpHeaders.Authorization, authorization)
+            }
+            assertEquals(HttpStatusCode.OK, busDetailResponse.status)
+
+            val originsResponse = client.get("/api/v1/departure-locations") {
+                header(HttpHeaders.Authorization, authorization)
+            }
             val originsPayload = Json.decodeFromString<Response<List<String>>>(originsResponse.bodyAsText())
             assertTrue(testOrigin in originsPayload.data.orEmpty())
 
-            val destinationsResponse = client.get("/api/v1/departure-locations/$testOrigin/destinations")
+            val destinationsResponse = client.get("/api/v1/departure-locations/$testOrigin/destinations") {
+                header(HttpHeaders.Authorization, authorization)
+            }
             val destinationsPayload = Json.decodeFromString<Response<List<String>>>(destinationsResponse.bodyAsText())
             assertTrue(testDestination in destinationsPayload.data.orEmpty())
 
             val invalidTimeRangeResponse = client.get("/api/v1/buses") {
+                header(HttpHeaders.Authorization, authorization)
                 parameter("departureTimeFrom", "05:00")
             }
             assertEquals(HttpStatusCode.BadRequest, invalidTimeRangeResponse.status)
@@ -188,6 +218,15 @@ class ApplicationTest {
                 setBody(Json.encodeToString(bus))
             }
             assertEquals(HttpStatusCode.Unauthorized, unauthenticatedWrite.status)
+            val unauthenticatedUpdate = client.put("/api/v1/buses/${bus.id}") {
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(bus))
+            }
+            assertEquals(HttpStatusCode.Unauthorized, unauthenticatedUpdate.status)
+            assertEquals(
+                HttpStatusCode.Unauthorized,
+                client.delete("/api/v1/buses/${bus.id}").status
+            )
 
             val guestResponse = client.get("/api/v1/auth/guest-token")
             assertEquals(HttpStatusCode.OK, guestResponse.status)
@@ -200,6 +239,16 @@ class ApplicationTest {
                 setBody(Json.encodeToString(bus))
             }
             assertEquals(HttpStatusCode.Forbidden, guestWrite.status)
+            val guestUpdate = client.put("/api/v1/buses/${bus.id}") {
+                header(HttpHeaders.Authorization, "Bearer ${guestToken.accessToken}")
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(bus))
+            }
+            assertEquals(HttpStatusCode.Forbidden, guestUpdate.status)
+            val guestDelete = client.delete("/api/v1/buses/${bus.id}") {
+                header(HttpHeaders.Authorization, "Bearer ${guestToken.accessToken}")
+            }
+            assertEquals(HttpStatusCode.Forbidden, guestDelete.status)
 
             val registrationResponse = client.post("/api/v1/auth/register") {
                 contentType(ContentType.Application.Json)
@@ -216,6 +265,16 @@ class ApplicationTest {
                 setBody(Json.encodeToString(bus))
             }
             assertEquals(HttpStatusCode.Forbidden, userWrite.status)
+            val userUpdate = client.put("/api/v1/buses/${bus.id}") {
+                header(HttpHeaders.Authorization, "Bearer ${registeredTokens.accessToken}")
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(bus))
+            }
+            assertEquals(HttpStatusCode.Forbidden, userUpdate.status)
+            val userDelete = client.delete("/api/v1/buses/${bus.id}") {
+                header(HttpHeaders.Authorization, "Bearer ${registeredTokens.accessToken}")
+            }
+            assertEquals(HttpStatusCode.Forbidden, userDelete.status)
 
             val loginResponse = client.post("/api/v1/auth/login") {
                 contentType(ContentType.Application.Json)
@@ -244,6 +303,18 @@ class ApplicationTest {
                 setBody(Json.encodeToString(bus))
             }
             assertEquals(HttpStatusCode.Created, createResponse.status)
+
+            val updateResponse = client.put("/api/v1/buses/${bus.id}") {
+                header(HttpHeaders.Authorization, "Bearer ${refreshedTokens.accessToken}")
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(bus))
+            }
+            assertEquals(HttpStatusCode.OK, updateResponse.status)
+
+            val deleteResponse = client.delete("/api/v1/buses/${bus.id}") {
+                header(HttpHeaders.Authorization, "Bearer ${refreshedTokens.accessToken}")
+            }
+            assertEquals(HttpStatusCode.OK, deleteResponse.status)
         } finally {
             busService.deleteBusById(bus.id)
             DatabaseFactory.dbQuery {

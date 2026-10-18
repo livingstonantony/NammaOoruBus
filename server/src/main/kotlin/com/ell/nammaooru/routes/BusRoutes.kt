@@ -25,9 +25,10 @@ import java.time.format.ResolverStyle
 
 @OptIn(ExperimentalKtorApi::class)
 fun Route.busRoutes(busService: BusService) {
-    busCollectionRoutes(busService)
+    authenticate("auth-jwt") {
+        busCollectionRoutes(busService)
 
-    route("/api/v1/departure-locations") {
+        route("/api/v1/departure-locations") {
         get {
             call.respond(
                 Response(
@@ -38,6 +39,7 @@ fun Route.busRoutes(busService: BusService) {
             )
         }.describe {
             summary = "List departure locations"
+            description = "Requires a valid Bearer access token; guest tokens are read-only."
             tag("Departure locations")
             responses {
                 HttpStatusCode.OK {
@@ -45,6 +47,9 @@ fun Route.busRoutes(busService: BusService) {
                     ContentType.Application.Json {
                         schema = jsonSchema<Response<List<String>>>()
                     }
+                }
+                HttpStatusCode.Unauthorized {
+                    description = "A valid Bearer access token is required."
                 }
             }
         }
@@ -72,6 +77,7 @@ fun Route.busRoutes(busService: BusService) {
             )
         }.describe {
             summary = "List destinations for a departure location"
+            description = "Requires a valid Bearer access token; guest tokens are read-only."
             tag("Departure locations")
             parameters {
                 path("departureLocation") {
@@ -89,7 +95,11 @@ fun Route.busRoutes(busService: BusService) {
                 HttpStatusCode.BadRequest {
                     description = "The departure location is required."
                 }
+                HttpStatusCode.Unauthorized {
+                    description = "A valid Bearer access token is required."
+                }
             }
+        }
         }
     }
 }
@@ -134,7 +144,7 @@ private fun Route.busCollectionRoutes(busService: BusService) {
             )
         }.describe {
             summary = "List buses"
-            description = "Filters by departure location, English destination, and optional inclusive departure-time range."
+            description = "Requires a valid Bearer access token; guest tokens are read-only. Filters by departure location, English destination, and optional inclusive departure-time range."
             tag("Buses")
             parameters {
                 query("departureLocation") {
@@ -164,6 +174,9 @@ private fun Route.busCollectionRoutes(busService: BusService) {
                 HttpStatusCode.BadRequest {
                     description = "The departure-time range is incomplete or invalid."
                 }
+                HttpStatusCode.Unauthorized {
+                    description = "A valid Bearer access token is required; guest tokens are read-only."
+                }
             }
         }
 
@@ -190,6 +203,7 @@ private fun Route.busCollectionRoutes(busService: BusService) {
             }
         }.describe {
             summary = "Get a bus"
+            description = "Requires a valid Bearer access token; guest tokens are read-only."
             tag("Buses")
             parameters {
                 path("busId") {
@@ -207,10 +221,12 @@ private fun Route.busCollectionRoutes(busService: BusService) {
                 HttpStatusCode.NotFound {
                     description = "No bus exists with this identifier."
                 }
+                HttpStatusCode.Unauthorized {
+                    description = "A valid Bearer access token is required; guest tokens are read-only."
+                }
             }
         }
 
-        authenticate("auth-jwt") {
         post {
             val isAdmin = call.principal<JWTPrincipal>()?.payload?.getClaim("isAdmin")?.asBoolean() == true
             if (!isAdmin) {
@@ -404,7 +420,6 @@ private fun Route.busCollectionRoutes(busService: BusService) {
                     description = "A valid Bearer access token is required."
                 }
             }
-        }
         }
     }
 }
