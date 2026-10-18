@@ -3,9 +3,11 @@ package com.ell.nammaooru
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import com.ell.nammaooru.data.Response
+import com.ell.nammaooru.database.DatabaseFactory
 import com.ell.nammaooru.routes.authRoutes
 import com.ell.nammaooru.routes.busRoutes
 import com.ell.nammaooru.services.AuthService
+import com.ell.nammaooru.services.BusService
 import com.ell.nammaooru.services.UserService
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
@@ -40,7 +42,7 @@ fun main() {
 
 @OptIn(ExperimentalKtorApi::class)
 fun Application.module() {
-    com.ell.nammaooru.database.DatabaseFactory.init(environment.config)
+    DatabaseFactory.init(environment.config)
 
     val jwtSecret = environment.config.propertyOrNull("ktor.security.jwt.secret")?.getString()
         ?: "your-super-secret-jwt-key-change-in-production"
@@ -128,6 +130,6 @@ fun Application.module() {
 
         // Public auth routes (no authentication required)
         authRoutes(authService, userService)
-        busRoutes(com.ell.nammaooru.services.BusService())
+        busRoutes(BusService())
     }
 }
