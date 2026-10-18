@@ -2,8 +2,17 @@ package com.ell.nammaooru
 
 import com.ell.nammaooru.data.Bus
 import com.ell.nammaooru.data.Days
+import com.ell.nammaooru.data.GuestTokenResponse
+import com.ell.nammaooru.data.LoginRequest
+import com.ell.nammaooru.data.RefreshTokenRequest
+import com.ell.nammaooru.data.RegisterRequest
 import com.ell.nammaooru.data.Response
+import com.ell.nammaooru.data.TokenResponse
+import com.ell.nammaooru.database.DatabaseFactory
+import com.ell.nammaooru.database.RefreshTokens
+import com.ell.nammaooru.database.Users
 import com.ell.nammaooru.services.BusService
+import com.ell.nammaooru.services.UserService
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -13,7 +22,10 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.testing.*
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.deleteWhere
 import kotlin.test.*
 import java.util.UUID
 
@@ -24,9 +36,7 @@ class ApplicationTest {
         application {
             module()
         }
-        val response = client.get("/") {
-            header("X-API-Key", "my-secret-nammaooru-key")
-        }
+        val response = client.get("/")
         assertEquals(HttpStatusCode.OK, response.status)
         assertEquals("Hello from Ktor", response.bodyAsText())
     }
@@ -43,7 +53,9 @@ class ApplicationTest {
         assertContains(document, "openapi:")
         assertContains(document, "/api/v1/buses:")
         assertContains(document, "/api/v1/departure-locations:")
+        assertContains(document, "/api/v1/auth/guest-token:")
         assertContains(document, "List buses")
+        assertContains(document, "A valid Bearer access token is required.")
 
         val swaggerResponse = client.get("/swagger")
         assertEquals(HttpStatusCode.OK, swaggerResponse.status)
@@ -55,9 +67,7 @@ class ApplicationTest {
             module()
         }
 
-        client.get("/") {
-            header("X-API-Key", "my-secret-nammaooru-key")
-        }
+        client.get("/")
 
         val busService = BusService()
         val testOrigin = "FilterTest${UUID.randomUUID()}"
@@ -109,7 +119,6 @@ class ApplicationTest {
 
         try {
             val response = client.get("/api/v1/buses") {
-                header("X-API-Key", "my-secret-nammaooru-key")
                 parameter("departureLocation", testOrigin)
                 parameter("destination", testDestination)
                 parameter("departureTimeFrom", "05:00")
@@ -120,35 +129,131 @@ class ApplicationTest {
             val payload = Json.decodeFromString<Response<List<Bus>>>(response.bodyAsText())
             assertEquals(listOf(buses.first().id), payload.data?.map { it.id })
 
-            val originsResponse = client.get("/api/v1/departure-locations") {
-                header("X-API-Key", "my-secret-nammaooru-key")
-            }
+            val originsResponse = client.get("/api/v1/departure-locations")
             val originsPayload = Json.decodeFromString<Response<List<String>>>(originsResponse.bodyAsText())
             assertTrue(testOrigin in originsPayload.data.orEmpty())
 
-            val destinationsResponse = client.get("/api/v1/departure-locations/$testOrigin/destinations") {
-                header("X-API-Key", "my-secret-nammaooru-key")
-            }
+            val destinationsResponse = client.get("/api/v1/departure-locations/$testOrigin/destinations")
             val destinationsPayload = Json.decodeFromString<Response<List<String>>>(destinationsResponse.bodyAsText())
             assertTrue(testDestination in destinationsPayload.data.orEmpty())
 
             val invalidTimeRangeResponse = client.get("/api/v1/buses") {
-                header("X-API-Key", "my-secret-nammaooru-key")
                 parameter("departureTimeFrom", "05:00")
             }
             assertEquals(HttpStatusCode.BadRequest, invalidTimeRangeResponse.status)
 
-            val legacyResponse = client.get("/busService") {
-                header("X-API-Key", "my-secret-nammaooru-key")
-            }
+            val legacyResponse = client.get("/busService")
             assertEquals(HttpStatusCode.NotFound, legacyResponse.status)
 
-            val missingBusDeleteResponse = client.delete("/api/v1/buses/missing-${UUID.randomUUID()}") {
-                header("X-API-Key", "my-secret-nammaooru-key")
-            }
-            assertEquals(HttpStatusCode.NotFound, missingBusDeleteResponse.status)
+            val missingBusDeleteResponse = client.delete("/api/v1/buses/missing-${UUID.randomUUID()}")
+            assertEquals(HttpStatusCode.Unauthorized, missingBusDeleteResponse.status)
         } finally {
             buses.forEach { busService.deleteBusById(it.id) }
+        }
+    }
+
+    @Test
+    fun testAuthRefreshAndAdminOnlyBusMutations() = testApplication {
+        application {
+            module()
+        }
+
+        client.get("/")
+
+        val userService = UserService()
+        val busService = BusService()
+        val username = "auth-${UUID.randomUUID()}"
+        val email = "$username@example.test"
+        val password = "test-password-123"
+        val adminUsername = "admin-${UUID.randomUUID()}"
+        val adminEmail = "$adminUsername@example.test"
+        val adminPassword = "admin-test-password-123"
+        val admin = userService.createUser(adminUsername, adminEmail, adminPassword, isAdmin = true)
+        assertNotNull(admin)
+        val bus = Bus(
+            id = UUID.randomUUID().toString(),
+            departingFrom = "Auth test origin",
+            destinationEnglish = "Auth test destination",
+            destinationTamil = "சோதனை",
+            busName = "Auth test bus",
+            note = "Auth integration test",
+            departTime = "06:15 AM",
+            days = listOf(Days.Monday)
+        )
+        var registeredUserId: String? = null
+
+        try {
+            val unauthenticatedWrite = client.post("/api/v1/buses") {
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(bus))
+            }
+            assertEquals(HttpStatusCode.Unauthorized, unauthenticatedWrite.status)
+
+            val guestResponse = client.get("/api/v1/auth/guest-token")
+            assertEquals(HttpStatusCode.OK, guestResponse.status)
+            val guestToken = Json.decodeFromString<Response<GuestTokenResponse>>(guestResponse.bodyAsText()).data!!
+            assertEquals(900L, guestToken.expiresIn)
+
+            val guestWrite = client.post("/api/v1/buses") {
+                header(HttpHeaders.Authorization, "Bearer ${guestToken.accessToken}")
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(bus))
+            }
+            assertEquals(HttpStatusCode.Forbidden, guestWrite.status)
+
+            val registrationResponse = client.post("/api/v1/auth/register") {
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(RegisterRequest(username, email, password)))
+            }
+            assertEquals(HttpStatusCode.Created, registrationResponse.status)
+            val registeredTokens = Json.decodeFromString<Response<TokenResponse>>(registrationResponse.bodyAsText()).data!!
+            registeredUserId = userService.getUserByUsername(username)?.id
+            assertNotNull(registeredUserId)
+
+            val userWrite = client.post("/api/v1/buses") {
+                header(HttpHeaders.Authorization, "Bearer ${registeredTokens.accessToken}")
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(bus))
+            }
+            assertEquals(HttpStatusCode.Forbidden, userWrite.status)
+
+            val loginResponse = client.post("/api/v1/auth/login") {
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(LoginRequest(adminUsername, adminPassword)))
+            }
+            assertEquals(HttpStatusCode.OK, loginResponse.status)
+            val adminTokens = Json.decodeFromString<Response<TokenResponse>>(loginResponse.bodyAsText()).data!!
+
+            val refreshResponse = client.post("/api/v1/auth/refresh") {
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(RefreshTokenRequest(adminTokens.refreshToken)))
+            }
+            assertEquals(HttpStatusCode.OK, refreshResponse.status)
+            val refreshedTokens = Json.decodeFromString<Response<TokenResponse>>(refreshResponse.bodyAsText()).data!!
+            assertNotEquals(adminTokens.refreshToken, refreshedTokens.refreshToken)
+
+            val replayedRefresh = client.post("/api/v1/auth/refresh") {
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(RefreshTokenRequest(adminTokens.refreshToken)))
+            }
+            assertEquals(HttpStatusCode.Unauthorized, replayedRefresh.status)
+
+            val createResponse = client.post("/api/v1/buses") {
+                header(HttpHeaders.Authorization, "Bearer ${refreshedTokens.accessToken}")
+                contentType(ContentType.Application.Json)
+                setBody(Json.encodeToString(bus))
+            }
+            assertEquals(HttpStatusCode.Created, createResponse.status)
+        } finally {
+            busService.deleteBusById(bus.id)
+            DatabaseFactory.dbQuery {
+                RefreshTokens.deleteWhere { RefreshTokens.userId eq admin.id }
+                Users.deleteWhere { Users.id eq admin.id }
+                registeredUserId?.let { userId ->
+                    RefreshTokens.deleteWhere { RefreshTokens.userId eq userId }
+                    Users.deleteWhere { Users.id eq userId }
+                }
+            }
         }
     }
 

@@ -44,7 +44,7 @@ object DatabaseFactory {
             Database.connect(dataSource)
 
             transaction {
-                SchemaUtils.createMissingTablesAndColumns(Buses)
+                SchemaUtils.createMissingTablesAndColumns(Users, RefreshTokens, Buses)
             }
         } catch (e: Exception) {
             System.err.println("Database initialization failed: ${e.message}")
@@ -71,6 +71,27 @@ object Buses : Table("buses") {
         serialize = { Json.encodeToString(it) },
         deserialize = { Json.decodeFromString(it) }
     )
+
+    override val primaryKey = PrimaryKey(id)
+}
+
+object Users : Table("users") {
+    val id = varchar("id", 50)
+    val username = varchar("username", 100).uniqueIndex()
+    val email = varchar("email", 255).uniqueIndex()
+    val passwordHash = varchar("password_hash", 255)
+    val isAdmin = bool("is_admin").default(false)
+    val createdAt = long("created_at")
+
+    override val primaryKey = PrimaryKey(id)
+}
+
+object RefreshTokens : Table("refresh_tokens") {
+    val id = varchar("id", 50)
+    val userId = varchar("user_id", 50).references(Users.id)
+    val token = text("token")
+    val expiresAt = long("expires_at")
+    val createdAt = long("created_at")
 
     override val primaryKey = PrimaryKey(id)
 }

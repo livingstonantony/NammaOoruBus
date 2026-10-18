@@ -11,5 +11,4 @@ object ApiConfig {
     const val BASE_API_URL = "$BASE_URL/$API_VERSION"
 
     const val BUSES = "$BASE_API_URL/buses"
-    val X_API_KEY = "my-secret-nammaooru-key"
 }

@@ -11,12 +11,18 @@ ktor:
     modules:
       - com.ell.nammaooru.ApplicationKt.module
   security:
-    apiKey: ${NAMMAOORU_API_KEY:-my-secret-nammaooru-key}
+    jwt:
+      secret: ${JWT_SECRET:-"your-super-secret-jwt-key-change-in-production"}
+      issuer: ${JWT_ISSUER:-"nammaooru-api"}
+    bootstrap:
+      adminUsername: ${BOOTSTRAP_ADMIN_USERNAME:-"admin"}
+      adminEmail: ${BOOTSTRAP_ADMIN_EMAIL:-"admin@nammaooru.local"}
+      adminPassword: ${BOOTSTRAP_ADMIN_PASSWORD:-"admin123"}
   database:
     driverClassName: "com.mysql.cj.jdbc.Driver"
     jdbcUrl: ${DB_URL:"jdbc:mysql://localhost:3306/nammaooru"}
-    username: ${DB_USER:-root"}
-    password: ${DB_PASSWORD:"root"}
+    username: ${DB_USER:-"root"}
+    password: ${DB_PASSWORD:-"root"}
 
 logger:
   level: INFO

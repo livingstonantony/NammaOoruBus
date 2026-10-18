@@ -15,6 +15,9 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import io.ktor.server.routing.openapi.describe
+import io.ktor.server.auth.authenticate
+import io.ktor.server.auth.jwt.JWTPrincipal
+import io.ktor.server.auth.principal
 import io.ktor.utils.io.ExperimentalKtorApi
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -207,7 +210,20 @@ private fun Route.busCollectionRoutes(busService: BusService) {
             }
         }
 
+        authenticate("auth-jwt") {
         post {
+            val isAdmin = call.principal<JWTPrincipal>()?.payload?.getClaim("isAdmin")?.asBoolean() == true
+            if (!isAdmin) {
+                call.respond(
+                    HttpStatusCode.Forbidden,
+                    Response(
+                        result = "failed",
+                        message = "Only admins can create buses",
+                        data = null
+                    )
+                )
+                return@post
+            }
             try {
                 val bus = call.receive<Bus>()
                 val createdBus = busService.addBus(bus)
@@ -223,6 +239,7 @@ private fun Route.busCollectionRoutes(busService: BusService) {
             }
         }.describe {
             summary = "Create a bus"
+            description = "Requires an admin Bearer access token."
             tag("Buses")
             requestBody {
                 required = true
@@ -241,10 +258,28 @@ private fun Route.busCollectionRoutes(busService: BusService) {
                 HttpStatusCode.BadRequest {
                     description = "The bus request body is invalid."
                 }
+                HttpStatusCode.Forbidden {
+                    description = "Only admins can create buses."
+                }
+                HttpStatusCode.Unauthorized {
+                    description = "A valid Bearer access token is required."
+                }
             }
         }
 
         put("/{busId}") {
+            val isAdmin = call.principal<JWTPrincipal>()?.payload?.getClaim("isAdmin")?.asBoolean() == true
+            if (!isAdmin) {
+                call.respond(
+                    HttpStatusCode.Forbidden,
+                    Response(
+                        result = "failed",
+                        message = "Only admins can update buses",
+                        data = null
+                    )
+                )
+                return@put
+            }
             val busId = call.parameters["busId"]
             if (busId == null) {
                 call.respond(
@@ -275,6 +310,7 @@ private fun Route.busCollectionRoutes(busService: BusService) {
             }
         }.describe {
             summary = "Replace a bus"
+            description = "Requires an admin Bearer access token."
             tag("Buses")
             parameters {
                 path("busId") {
@@ -302,10 +338,28 @@ private fun Route.busCollectionRoutes(busService: BusService) {
                 HttpStatusCode.NotFound {
                     description = "No bus exists with this identifier."
                 }
+                HttpStatusCode.Forbidden {
+                    description = "Only admins can update buses."
+                }
+                HttpStatusCode.Unauthorized {
+                    description = "A valid Bearer access token is required."
+                }
             }
         }
 
         delete("/{busId}") {
+            val isAdmin = call.principal<JWTPrincipal>()?.payload?.getClaim("isAdmin")?.asBoolean() == true
+            if (!isAdmin) {
+                call.respond(
+                    HttpStatusCode.Forbidden,
+                    Response(
+                        result = "failed",
+                        message = "Only admins can delete buses",
+                        data = null
+                    )
+                )
+                return@delete
+            }
             val busId = call.parameters["busId"]
             if (busId == null) {
                 call.respond(
@@ -328,6 +382,7 @@ private fun Route.busCollectionRoutes(busService: BusService) {
             )
         }.describe {
             summary = "Delete a bus"
+            description = "Requires an admin Bearer access token."
             tag("Buses")
             parameters {
                 path("busId") {
@@ -342,7 +397,14 @@ private fun Route.busCollectionRoutes(busService: BusService) {
                 HttpStatusCode.NotFound {
                     description = "No bus exists with this identifier."
                 }
+                HttpStatusCode.Forbidden {
+                    description = "Only admins can delete buses."
+                }
+                HttpStatusCode.Unauthorized {
+                    description = "A valid Bearer access token is required."
+                }
             }
+        }
         }
     }
 }
